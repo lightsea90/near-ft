@@ -45,12 +45,11 @@ impl Contract {
     pub fn new_default_meta(
         owner_id: ValidAccountId, 
         total_supply: U128,
-        burn_token_account: Option<ValidAccountId>
         ) -> Self {
         Self::new(
             owner_id,
             total_supply,
-            burn_token_account,
+            None,
             FungibleTokenMetadata {
                 spec: FT_METADATA_SPEC.to_string(),
                 name: "Example NEAR fungible token".to_string(),

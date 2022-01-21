@@ -99,7 +99,8 @@ impl Contract {
 
             self.token.internal_withdraw(
                 &burn_token_account.to_string(), 
-                amount);
+                amount
+                );
         } else {
             panic!("This is not a burnable token!!");
         }

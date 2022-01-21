@@ -89,18 +89,20 @@ impl Contract {
 
     pub fn burn_token( 
         &mut self,
-        account_id: ValidAccountId,
         amount: Balance
     ) {
-
         if let Some(burn_token_account) = &self.burn_token_account {
             assert!(
                 env::predecessor_account_id() == burn_token_account.to_string(),
-                "Only burn_token.token_factory.testnet account can execute the function"
+                "Only {} account can execute the function", burn_token_account
             );
-        }
 
-        self.token.internal_withdraw(account_id.as_ref(), amount);
+            self.token.internal_withdraw(
+                &burn_token_account.to_string(), 
+                amount);
+        } else {
+            panic!("This is not a burnable token!!");
+        }
     }
 
     pub fn total_supply(

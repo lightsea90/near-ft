@@ -15,16 +15,18 @@ NOTES:
   - To prevent the deployed contract from being modified or deleted, it should not have any access
     keys on its account.
 */
-use near_contract_standards::fungible_token::metadata::{
+use fungible_token::metadata::{
     FungibleTokenMetadata, FungibleTokenMetadataProvider, FT_METADATA_SPEC,
 };
-use near_contract_standards::fungible_token::FungibleToken;
+use fungible_token::FungibleToken;
 use near_sdk::borsh::{self, BorshDeserialize, BorshSerialize};
 use near_sdk::collections::LazyOption;
 use near_sdk::json_types::{ValidAccountId, U128};
 use near_sdk::{env, log, near_bindgen, AccountId, Balance, PanicOnDefault, PromiseOrValue};
 
 near_sdk::setup_alloc!();
+
+mod fungible_token;
 
 #[near_bindgen]
 #[derive(BorshDeserialize, BorshSerialize, PanicOnDefault)]
@@ -121,8 +123,8 @@ impl Contract {
     }
 }
 
-near_contract_standards::impl_fungible_token_core!(Contract, token, on_tokens_burned);
-near_contract_standards::impl_fungible_token_storage!(Contract, token, on_account_closed);
+impl_fungible_token_core!(Contract, token, on_tokens_burned);
+impl_fungible_token_storage!(Contract, token, on_account_closed);
 
 #[near_bindgen]
 impl FungibleTokenMetadataProvider for Contract {

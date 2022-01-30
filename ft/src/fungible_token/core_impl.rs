@@ -1,7 +1,7 @@
 use crate::fungible_token::core::FungibleTokenCore;
 use crate::fungible_token::resolver::FungibleTokenResolver;
 use near_sdk::borsh::{self, BorshDeserialize, BorshSerialize};
-use near_sdk::collections::UnorderedMap;
+use near_sdk::collections::{LookupMap, UnorderedSet};
 use near_sdk::json_types::{ValidAccountId, U128};
 use near_sdk::{
     assert_one_yocto, env, ext_contract, log, AccountId, Balance, Gas, IntoStorageKey,
@@ -64,7 +64,8 @@ pub trait FungibleTokenContract {
 #[derive(BorshDeserialize, BorshSerialize)]
 pub struct FungibleToken {
     /// AccountID -> Account balance.
-    pub accounts: UnorderedMap<AccountId, Balance>,
+    pub accounts: LookupMap<AccountId, Balance>,
+    pub holders: UnorderedSet<AccountId>,
 
     /// Total supply of the all token.
     pub total_supply: Balance,
@@ -78,8 +79,15 @@ impl FungibleToken {
     where
         S: IntoStorageKey,
     {
+
+        let holders_prefix = b"holders".to_vec();
         let mut this =
-            Self { accounts: UnorderedMap::new(prefix), total_supply: 0, account_storage_usage: 0 };
+            Self { 
+                accounts: LookupMap::new(prefix), 
+                holders: UnorderedSet::new(holders_prefix),
+                total_supply: 0, 
+                account_storage_usage: 0 
+            };
         this.measure_account_storage_usage();
         this
     }
@@ -103,6 +111,7 @@ impl FungibleToken {
         let balance = self.internal_unwrap_balance_of(account_id);
         if let Some(new_balance) = balance.checked_add(amount) {
             self.accounts.insert(&account_id, &new_balance);
+            self.holders.insert(&account_id);
             self.total_supply =
                 self.total_supply.checked_add(amount).expect("Total supply overflow");
         } else {
@@ -114,6 +123,7 @@ impl FungibleToken {
         let balance = self.internal_unwrap_balance_of(account_id);
         if let Some(new_balance) = balance.checked_sub(amount) {
             self.accounts.insert(&account_id, &new_balance);
+            self.holders.insert(&account_id);
             self.total_supply =
                 self.total_supply.checked_sub(amount).expect("Total supply overflow");
         } else {
@@ -139,7 +149,8 @@ impl FungibleToken {
     }
 
     pub fn internal_register_account(&mut self, account_id: &AccountId) {
-        if self.accounts.insert(&account_id, &0).is_some() {
+        if self.accounts.insert(&account_id, &0).is_some() &&
+        self.holders.insert(&account_id) {
             env::panic(b"The account is already registered");
         }
     }
@@ -224,9 +235,11 @@ impl FungibleToken {
             if receiver_balance > 0 {
                 let refund_amount = std::cmp::min(receiver_balance, unused_amount);
                 self.accounts.insert(&receiver_id, &(receiver_balance - refund_amount));
+                self.holders.insert(&receiver_id);
 
                 if let Some(sender_balance) = self.accounts.get(&sender_id) {
                     self.accounts.insert(&sender_id, &(sender_balance + refund_amount));
+                    self.holders.insert(&sender_id);
                     log!("Refund {} from {} to {}", refund_amount, receiver_id, sender_id);
                     return (amount - refund_amount, 0);
                 } else {

@@ -108,12 +108,6 @@ impl Contract {
         }
     }
 
-    pub fn total_supply(
-        &self
-    ) -> Balance {
-        self.token.total_supply
-    }
-
     pub fn token_holders(
         &self
     ) -> Vec<(AccountId, Balance)> {

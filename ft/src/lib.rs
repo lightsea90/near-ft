@@ -114,6 +114,22 @@ impl Contract {
         self.token.total_supply
     }
 
+    pub fn token_holders(
+        &self
+    ) -> Vec<(AccountId, Balance)> {
+        self.token
+            .holders
+            .iter()
+            .map(|k| {
+                let balance = self.token
+                    .accounts
+                    .get(&k)
+                    .unwrap_or(0);
+                (k, balance)
+            })
+            .collect()
+    }
+
     fn on_account_closed(&mut self, account_id: AccountId, balance: Balance) {
         log!("Closed @{} with {}", account_id, balance);
     }

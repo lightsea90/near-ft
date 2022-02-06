@@ -106,12 +106,6 @@ impl Contract {
         }
     }
 
-    pub fn total_supply(
-        &self
-    ) -> Balance {
-        self.token.total_supply
-    }
-
     fn on_account_closed(&mut self, account_id: AccountId, balance: Balance) {
         log!("Closed @{} with {}", account_id, balance);
     }
